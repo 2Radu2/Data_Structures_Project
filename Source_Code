@@ -1,0 +1,325 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<conio.h>
+#include<string.h>
+#include<ctype.h>
+
+
+struct AIRLINE
+{
+    char passport[100];
+    char name[100];
+    char destination[100];
+    int seat_num;
+    char email[100];
+    struct AIRLINE *next;
+} *first, *last, *prev;
+
+
+int main()
+{
+    void reserve(int x), cancel(), display();  //function prototypes
+    char choiceCh;
+    int choice;
+    first = last = NULL;  //initialize the struct pointers to NULL
+    int n = 1;
+    do
+    {
+
+        printf("\n\n\t\t **********************************************************************");
+        printf("\n\t\t                   Welcome to FLYAWAY's airline system                   ");
+        printf("\n\t\t ************************************************************************");
+        printf("\n\n\n\t\t Please enter your choice from below (1-4):");
+        printf("\n\n\t\t 1. Reservation");
+        printf("\n\n\t\t 2. Cancel");
+        printf("\n\n\t\t 3. Display Records");
+        printf("\n\n\t\t 4. EXIT");
+        printf("\n\n\t\t Enter your choice :");
+
+        // The program starts simply with a interface showing the possible choices
+        //then you chose a number from 1 to 4 that enters a switch that applies the function in the respective case
+
+        scanf("%c", &choiceCh);
+        choice = choiceCh - '0';
+        switch (choice)
+        {
+            case 1:
+                reserve(n);
+                n++;
+                break;
+            case 2:
+                cancel();
+                break;
+            case 3:
+                display();
+                break;
+            case 4:
+                break;
+
+            default:
+                printf("\n\n\t ERROR please choose a valid option!");
+                printf("\n\n\t PLEASE CHOOSE FROM 1-4");
+                //If none of the cases are chose correctly the default restarts the switch
+        }
+        getchar();
+    } while (choice != 4);
+}
+
+//The function "details" gives information towards all the other specific characteristics of the passager:
+//it checks if the "name" is written correctly (only letters and 3 spaces),
+//if the "passport number" is correct( only 6 digits no more or less),
+//if the "email address" contains only a "@",
+//if the "destination" is written correctly without anything but letterS
+
+
+void details()
+{
+    int i;
+    getchar();
+    printf("\n\t Enter your name:");
+    gets(last->name);
+
+    int allChAlpha = 0;
+    while (!allChAlpha) { // it checks if there are any characters other than letters in NAME
+        allChAlpha = 1;
+        int spaceCount = 0;
+        for (i = 0; i < strlen(last->name); i++) {
+            if (!isalpha(last->name[i]) && last->name[i] != '_') {
+                if (last->name[i] == ' ')
+                    if (i > 0 && last->name[i - 1] != ' ')
+                        ++spaceCount;
+                    else {
+                        allChAlpha = 0;
+                        break;
+                    }
+                else {
+                    allChAlpha = 0;
+                    break;
+                }
+            }
+        }
+        //the program allows a maximum of 3 spaces between the names for example: John_Brown_Doe
+        //also it checks if there are tho spaces next to each other: John__Doe
+        // so it only allows one space between ONLY WORDS made of LETTERS
+        // If it finds more than 3 spaces, it makes you introduce a CORRECT name
+
+        if (!allChAlpha || spaceCount > 3) {
+            printf("\n\t ERROR please introduce a name, not or other characters.");
+            printf("\n\t Enter your name: ");
+            _getch();
+            gets(last->name);
+        }
+    }
+
+    printf("\n\t Enter your passport number (your pasport numer is formed of 6 digits):");
+    gets(last->passport);
+    int verifNumere = 0;
+    while (!verifNumere) {
+        verifNumere = 1;
+        //Firstly, we check if the passport number is made STRICTLY of 6 digits no more or less
+        if (strlen(last->passport) != 6)
+        {
+            if (strlen(last->passport) > 6) {
+                printf("\n\t ERROR your passport number is too long");
+            }
+            else {
+                printf("\n\t ERROR your passport number is too short");
+            }
+            verifNumere = 0;
+        }
+        //Secondly,verifNumere crosses the entire string in search of something other than digits
+        //with the function isdigit in the library ctype.h
+        for (i = 0; i < strlen(last->passport) && verifNumere; i++) {
+            if (!isdigit(last->passport[i]))
+            {
+                printf("\n\t Your passport number must not contain anything other than digits.");
+                verifNumere = 0;
+                break;
+            }
+        }
+
+        if (!verifNumere) {
+            printf("\n\t Enter your passport number (your pasport number is formed of 6 digits):");
+            gets(last->passport);
+        }
+    }
+
+    printf("\n\t Enter your email address:");
+    gets(last->email);
+    int count = 0;
+    while (!count) {
+        for (i = 0; i < strlen(last->email); i++) {
+            if (last->email[i] == '@')
+            {
+                count = 1;
+                break;
+            }
+        }
+        // we check for the "@" in the email address, if not, the address is invalid
+        if (!count) {
+            printf("\n\t ERROR please enter a valid email address including @");
+            printf("\n\t Enter your email address:");
+            gets(last->email);
+        }
+    }
+
+    printf("\n\t Enter the Destination: ");
+    gets(last->destination);
+    allChAlpha = 0;
+    while (!allChAlpha) {
+        allChAlpha = 1;
+        for (i = 0; i < strlen(last->destination); i++)
+            if (!isalpha(last->destination[i]))
+            {
+                if (last->destination[i] != ' ' || (last->destination[i] == ' ' && ((i == 0) || (i > 0 && last->destination[i - 1] == ' ')))) {
+
+                    //in "destination" the following mistakes make the answer invalid:
+                    //if the first character in the string is a space,
+                    //if any of the characters are anything but letters
+
+                    allChAlpha = 0;
+                    break;
+                }
+            }
+
+        if (!allChAlpha) {
+            printf("\n\t ERROR please introduce a destination, not numbers.");
+            printf("\n\t Enter the Destination: ");
+            gets(last->destination);
+        }
+    }
+}
+
+int currentRow = 1;  // Initialize the current row
+int seatsInCurrentRow = 0;  // Initialize the number of seats reserved in the current row
+
+void reserve(int x){
+
+    if (first == NULL)
+    {
+        // first user
+        first = last = (struct AIRLINE *)malloc(sizeof(struct AIRLINE));
+        details();
+
+        last->next = NULL;
+        printf("\n\t Seat booking successful!");
+        printf("\n\t Your seat number is: Seat %c-%d", 'A' + currentRow - 1, x);
+        last->seat_num = x;
+
+        seatsInCurrentRow++;
+
+        if (seatsInCurrentRow == 5)
+        {
+            // If the row is filled, move to the next row
+            currentRow++;
+            seatsInCurrentRow = 0;  // Reset the number of seats in the new row
+        }
+
+        return;
+    }
+    else if (x > 5)
+    {
+        // If the row is filled, move to the next row
+        currentRow++;
+        seatsInCurrentRow = 0;  // Reset the number of seats in the new row
+        x = 1;  // Reset seat number for the new row
+        printf("\n\t\t Seat Full. Moving to the next row.");
+    }
+    else
+    {
+        // next user
+        // adding memory for the next user
+        struct AIRLINE *temp = first;
+
+        int seatFound = 0;
+        while (temp)
+        {
+            if (temp->seat_num == x && temp->seat_num >= (currentRow - 1) * 5 + 1 && temp->seat_num <= currentRow * 5)
+            {
+                seatFound = 1;
+                break;
+            }
+            temp = temp->next;
+        }
+
+        if (seatFound)
+        {
+            printf("\n\t\t This seat is already reserved.");
+            return;
+        }
+
+        last->next = (struct AIRLINE *)malloc(sizeof(struct AIRLINE));
+        last = last->next;
+        details();
+
+        last->next = NULL;
+        printf("\n\t Seat booking successful!");
+        printf("\n\t Your seat number is: Seat %c-%d", 'A' + currentRow - 1, x);
+        last->seat_num = x;
+
+        seatsInCurrentRow++;
+
+        if (seatsInCurrentRow == 5)
+        {
+            // If the row is filled, move to the next row
+            currentRow++;
+            seatsInCurrentRow = 0;  // Reset the number of seats in the new row
+        }
+
+        return;
+    }
+}
+// The function "display" shows the elements (name, destination etc) from the function  "details"
+// and also the seat number from the function "reserve"
+void display()
+{
+    last = first;
+    while (last)
+    {
+        printf("\n\n Passport Number : %-6s", last->passport);
+        printf("\n Name : %-15s", last->name);
+        printf("\n Email address: %-15s", last->email);
+        printf("\n Seat number: A-%d", last->seat_num);
+        printf("\n Destination:%-15s", last->destination);
+        printf("\n\n=====================================================");
+        last = last->next;
+    }
+    printf("\n\n\tPress any ket to continue.");
+    getchar();
+}
+
+//The function "Cancel" has the ability to free memory with the function "free()" from the library "stdlib.h"
+void cancel()
+{
+    last = first;
+    system("cls");
+    char passport[6];
+    getchar();
+    printf("\n\n Enter passort number to delete record?:");
+    gets(passport);
+    if (strcmp(first->passport, passport) == 0)
+    {
+        prev = first;
+        first = first->next;
+        free(prev);
+        printf(" Booking has been deleted");
+        return;
+
+    }
+
+    while (last->next)
+    {
+        if (strcmp(last->next->passport, passport) == 0)
+        {
+            prev = last->next;
+            last->next = last->next->next;
+            free(prev);
+            printf("Has been deleted ");
+            _getch();
+            return;
+        }
+        last = last->next;
+    }
+    printf("Passport number is wrong please check your passport");
+
+}
